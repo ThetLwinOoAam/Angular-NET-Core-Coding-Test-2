@@ -26,7 +26,7 @@ import { Login2Module } from 'app/main/pages/authentication/login-2/login-2.modu
 import { BnNgIdleService } from 'bn-ng-idle'; // import bn-ng-idle service
 
 //XL 20191224 Routing : 404 page not found on refresh after deployment
-import { HashLocationStrategy, LocationStrategy } from '@angular/common';
+import { PathLocationStrategy, LocationStrategy } from '@angular/common';
 
 //XL dialog
 
@@ -109,7 +109,7 @@ const MY_FORMATS = {
 
     //XL 20191115 Task# SAI-21 Implement Session Timeout Feature to Login Component
     providers: [BnNgIdleService,
-        { provide: LocationStrategy, useClass: HashLocationStrategy },
+        { provide: LocationStrategy, useClass: PathLocationStrategy },
         //GS change date format
         { provide: MAT_DATE_FORMATS, useValue: MY_FORMATS },
         authInterceptorProviders,

@@ -16,6 +16,9 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Generic;
+using WebApi.Models.Tokens;
+using WebApi.Repository;
 
 namespace WebApi
 {
@@ -111,6 +114,12 @@ namespace WebApi
             services.AddScoped<IModuleService, ModuleService>();
             services.AddScoped<IModulePageService, ModulePageService>();
 
+            // add access token config
+            var tokenConfig = GetTokenConfig(Configuration);
+            services.AddSingleton(tokenConfig);
+
+            services.AddScoped<INewMailService, NewMailService>();
+            services.AddScoped<IMailRepository, MailRepository>();
 
             services.AddLogging(loggingBuilder => {
                 //loggingBuilder.AddFile("Log/{0:yyyy}-{0:MM}-{0:dd}.log", fileLoggerOpts => {
@@ -183,6 +192,27 @@ namespace WebApi
                 });
 
             });
+        }
+
+        private static AccessTokenConfig GetTokenConfig(IConfiguration config)
+        {
+            AccessTokenConfig tokenConfig = null;
+            var accessTokenSection = config.GetSection("AppSettings").GetSection("AccessToken");
+            var secretKey = accessTokenSection.GetSection("Secret").Value;
+            var tokenExpiry = accessTokenSection.GetSection("Expiration").Value;
+
+            if (string.IsNullOrWhiteSpace(secretKey) || string.IsNullOrWhiteSpace(tokenExpiry))
+            {
+                throw new KeyNotFoundException();
+            }
+
+            tokenConfig = new AccessTokenConfig
+            {
+                SecretKey = secretKey,
+                AccessTokenExpiration = tokenExpiry
+            };
+
+            return tokenConfig;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

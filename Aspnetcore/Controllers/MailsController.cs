@@ -194,7 +194,27 @@ namespace WebApi.Controllers
         [HttpGet("folderData/{paramFolderId}/{pageNumber}/{rowsOfPage}")]
         public IActionResult GetSentFolder(int paramFolderId, int pageNumber, int rowsOfPage)
         {
-            // TODO: Complete the implementation of pagination functionality
+            var offset = (pageNumber - 1) * rowsOfPage;
+            var userId = UserService.GetUserIdFromToken(Request.Headers["Authorization"], _appSettings.Secret);
+            var userIdParam = new SqlParameter("@UserID", userId);
+            var folderIdParam = new SqlParameter("@FolderID", paramFolderId);
+            var offsetParam = new SqlParameter("@OffsetValue", offset);
+
+            var results = _context.MailModel.FromSqlRaw(@"
+                select m.Id, su.StaffName as SendingStaffName, su.StaffEmail as SendingStaffEmail, ru.StaffName as ReceivingStaffName, ru.StaffEmail as ReceivingStaffEmail, m.Subject, m.Message, m.SentTime, m.SentSuccessToSMTPServer, m.[Read], m.Starred, m.Important, m.HasAttachments, m.[Label], m.Folder 
+                from Mail m
+                left join Users su on su.UserID = m.SendingUserID
+                left join Users ru on ru.UserID = m.ReceivingUserID
+                where m.SendingUserID = @UserID
+                and m.Folder = @FolderID
+                order by m.SentTime desc
+                offset @OffsetValue rows fetch next 10 rows only", parameters: new[] { userIdParam, folderIdParam, offsetParam }).ToList();
+
+            var totalRows = _context.Mail.Where(x => x.Folder == paramFolderId && x.SendingUserID == userId).Count();
+
+            MailsPageObj mailsPageObj = new MailsPageObj { totalRows = totalRows, rowsOfPage = rowsOfPage, pageNumber = pageNumber,results = results };
+            return Ok(mailsPageObj);
+			
         }
     }
 }
