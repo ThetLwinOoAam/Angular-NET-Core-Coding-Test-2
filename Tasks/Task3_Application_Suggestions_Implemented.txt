@@ -1,0 +1,56 @@
+Angular App Suggestions
+
+1) Url sturcture more look good if PathLocationStrategy is used
+Use PathLocationStrategy (e.g, http://localhost:4500/apps/mail/sent) in app.module.ts instead of HashLocationStrategy (e.g, http://localhost:4500/#apps/mail/sent)
+
+- This is implemented
+- Angular\src\app\app.module.ts
+
+Back-end api suggestions
+
+1) Controller class should not access DataContext directly
+	In existing logic, DataContext is using directly in controller class. Controller should has direct access to Service layer and some input validation. Service layer should do some business logic, if required, it should call repository layer. Then repository calls DataContext layer for database operations.(Controllers>Services(via Service Interface)> Repository(via Repository Interface))> DataContext [SR, Separation of Concerns, etc]
+
+- This is implemented
+- Aspnetcore\Controllers\NewMailController.cs
+- Aspnetcore\Services\NewMailService.cs
+- Aspnetcore\Repository\MailRepository.cs
+
+2) Create custom Controller base class
+	It is better to custom Controller base class that is inherited from Microsoft.AspNetCore.Mvc.Controller. In that custom Controller Base class, that should has some logic and data related to access token and login user info. All other contorll classes should be inherited from that custom Controller base class. That elimates the things working with access token, payload in access token and requesting login user information again from database because it is done by custom controller base class[SR, Separation of Concerns, DRY,etc]
+
+- This is implemented
+- Aspnetcore\Controllers\AppBaseController.cs
+- Aspnetcore\Controllers\NewMailController.cs
+- Aspnetcore\Models\Tokens
+- Aspnetcore\Helpers\AccessTokenHelper.cs
+
+
+4) Reduce using sql raw query.
+	With EF, we can get advantages of using ling query syntax or method syntax. They are more simpler, easy to use and more safe while traditional sql query text is more complex and error prone, espically it is as string literals. But using sql raw query could be accepted if existing is running on client for very long time, the system is very stable and most of the logic are in Database Stored Procedure. Now, we are trying to implement rest api application. If we move all these logic again to new system, it needs a lot of effort, takes long time to implement and the system becomes unstable. At that time, I prefer to sql raw query to call existing Database stored procedure and the sql query text is very short because all logic are in actually in Stored Procedure.
+
+- This is implemented
+- Aspnetcore\Repository\MailRepository.cs
+- Aspnetcore\Controllers\NewMailController.cs
+
+5) Use More Async method to aviod blocking
+	It is better to implement as async method (Generall we use Aync in method name suffix like AddtoDBAsync())
+
+- This is implemented
+- Aspnetcore\Repository\MailRepository.cs
+- Aspnetcore\Controllers\NewMailController.cs
+- Aspnetcore\Services\NewMailService.cs
+
+6) Add more claims in payload about login user
+	That helps to reduce getting login user info again from Database.
+
+- Aspnetcore\Controllers\AppBaseController.cs
+- Aspnetcore\Controllers\NewMailController.cs
+- Aspnetcore\Controllers\LoginController.cs
+- Aspnetcore\Models\Tokens
+- Aspnetcore\Helpers\AccessTokenHelper.cs
+
+
+
+
+

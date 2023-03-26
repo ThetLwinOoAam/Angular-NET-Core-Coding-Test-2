@@ -1,0 +1,7 @@
+
+Back-end api
+
+- This is implemented
+- Aspnetcore\Controllers\MailController.cs > GetSentFolder(int paramFolderId, int pageNumber, int rowsOfPage)
+
+

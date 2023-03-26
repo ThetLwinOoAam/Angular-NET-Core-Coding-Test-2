@@ -1,0 +1,88 @@
+Angular App Suggestions
+
+1) Url sturcture more look good if PathLocationStrategy is used
+Use PathLocationStrategy (e.g, http://localhost:4500/apps/mail/sent) in app.module.ts instead of HashLocationStrategy (e.g, http://localhost:4500/#apps/mail/sent)
+
+2) It is better to use as Constant or add in environment file if they are not intended to change
+In exisiting project, there is class called MailFakeDb, I hope those values not intended to change anywhere else. It is better to use them as constants or confing in environment file, that will help to avoid unintended changes to them
+
+3) It is better not to logout for 401 http error
+	We can do some other options for that. One is redirection to access denied page if user is logged in success but try to access a page that needs higher level permission. Another case is user has permission to access a page, but the use is some event on it that needs to call back-end api endpoint that needs higher role. In that case, it is better to show error to user instead of logging out by the system and redirect to login page.
+4) Prefer to use simpler Angular Project Structure
+src
+	> app
+		> guards
+		> pages
+		> shared
+			> constants
+			> directives
+			> interceptors
+			> models
+			> pipes
+			> services
+			> validators
+
+	> assets
+	> enironments
+
+Back-end api suggestions
+
+1) Controller class should not access DataContext directly
+	In existing logic, DataContext is using directly in controller class. Controller should has direct access to Service layer and some input validation. Service layer should do some business logic, if required, it should call repository layer. Then repository calls DataContext layer for database operations.(Controllers>Services(via Service Interface)> Repository(via Repository Interface))> DataContext [SR, Separation of Concerns, etc]
+
+2) Create custom Controller base class
+	It is better to custom Controller base class that is inherited from Microsoft.AspNetCore.Mvc.Controller. In that custom Controller Base class, that should has some logic and data related to access token and login user info. All other contorll classes should be inherited from that custom Controller base class. That elimates the things working with access token, payload in access token and requesting login user information again from database because it is done by custom controller base class[SR, Separation of Concerns, DRY,etc]
+
+3) Single appsettings file is not enough for multi-environment natures and security purposes
+	Assume that the system is running as multi-environments [Dev, Stg, Prod] and includes calling to third party services or the system itself is a microservices system. Some information are difference based on environment( some of them are sensitive like connection strings and secret key and some of them not sensitive like external thrid party api urls, aws s3 location, etc). Some are genrally the same in all environments like token lifetime. So, it is better to use separate files and combined them when system start up. This helps to decide which files should be included in git checkin and which should be git ignore. It elimates requesting to senior manager and wasting time to change by him for not sensitive data in config files because it is already included in git checkin. If all config data are in a single file, we can't get this advantage.
+
+4) Reduce using sql raw query.
+	With EF, we can get advantages of using ling query syntax or method syntax. They are more simpler, easy to use and more safe while traditional sql query text is more complex and error prone, espically it is as string literals. But using sql raw query could be accepted if existing is running on client for very long time, the system is very stable and most of the logic are in Database Stored Procedure. Now, we are trying to implement rest api application. If we move all these logic again to new system, it needs a lot of effort, takes long time to implement and the system becomes unstable. At that time, I prefer to sql raw query to call existing Database stored procedure and the sql query text is very short because all logic are in actually in Stored Procedure.
+
+5) Use More Async method to aviod blocking
+	It is better to implement as async method (Generall we use Aync in method name suffix like AddtoDBAsync())
+
+6) Add more claims in payload about login user
+	That helps to reduce getting login user info again from Database.
+
+7) It is better to support multi-version and use TypeFilter
+
+	[Route("v{version:apiVersion}/companies")]
+	[ApiVersion("1.0")]
+	[ApiVersion("2.0")]
+	[ApiController]
+	public class CompaniesController : BaseController
+	{
+		[HttpGet("{companyGuid}")]
+        	[MapToApiVersion("1.0")]
+        	[TypeFilter(typeof(AuthorizeUserRoleAttribute), Arguments = new object[] { "admin_group" })]
+        	public async Task<IActionResult> Get(string companyGuid)
+		{
+			//return with version 1 logic
+		}
+
+		[HttpGet("{companyGuid}")]
+        	[MapToApiVersion("2.0")]
+        	[TypeFilter(typeof(AuthorizeUserRoleAttribute), Arguments = new object[] { "admin_group" })]
+        	public async Task<IActionResult> GetV2(string companyGuid)
+		{
+			//return with version 2 logic
+		}
+
+	}
+
+
+Database Suggestions
+
+1 ) Use View more for commonly used complex query
+	To DRY and simpler, it is better to use database view for complex query but it is common.
+
+2) Same Naming Convention for Primary Key
+	In existing system, in some tables, Primary Key colum is named as ID, but in some tables, named as TableNameID. It is better to same naming standard for all. In foreign key table, it should used ForeignKeyTableNameID for all.
+
+
+
+
+
+
+
